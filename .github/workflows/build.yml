@@ -19,7 +19,7 @@ jobs:
       matrix:
         config:
         - {
-            name: "Linux",
+            name: "Linux-x86_64",
             os: ubuntu-latest,
             artifact: "blast-dbf",
             build_type: "Release",
@@ -29,28 +29,7 @@ jobs:
             generators: "Ninja"
           }
         - {
-            name: "Windows MSVC",
-            os: windows-latest,
-            artifact: "blast-dbf.exe",
-            build_type: "Release",
-            cc: "cl",
-            cxx: "cl",
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-            archiver: "7z a",
-            generators: "Visual Studio 16 2019"
-          }
-        - {
-            name: "Windows MinGW",
-            os: windows-latest,
-            artifact: "windows_mingw.7z",
-            build_type: "Release",
-            cc: "gcc",
-            cxx: "g++",
-            archiver: "7z a",
-            generators: "Ninja"
-          }
-        - {
-            name: "macOS",
+            name: "macOS-x86_64",
             os: macos-latest,
             artifact: "blast-dbf",
             build_type: "Release",
@@ -59,6 +38,28 @@ jobs:
             archiver: "7za a",
             generators: "Ninja"
           }
+        # - {
+        #     name: "Windows MSVC",
+        #     os: windows-latest,
+        #     artifact: "blast-dbf.exe",
+        #     build_type: "Release",
+        #     cc: "cl",
+        #     cxx: "cl",
+        #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+        #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+        #     archiver: "7z a",
+        #     generators: "Visual Studio 16 2019"
+        #   }
+        # - {
+        #     name: "Windows MinGW",
+        #     os: windows-latest,
+        #     artifact: "windows_mingw.7z",
+        #     build_type: "Release",
+        #     cc: "gcc",
+        #     cxx: "g++",
+        #     archiver: "7z a",
+        #     generators: "Ninja"
+        #   }
 
     steps:
       - name: Checkout
@@ -79,7 +80,6 @@ jobs:
           choco install ninja cmake
           ninja --version
           cmake --version
-          dir
 
       - name: Install dependencies on MacOS
         if: startsWith(matrix.config.os, 'macos')
@@ -98,10 +98,7 @@ jobs:
 
       - name: Pack
         shell: bash
-        run: |
-          ls -lha
-          ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
-          ls -lha
+        run: ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
 
       - name: Upload
         uses: actions/upload-artifact@v2
