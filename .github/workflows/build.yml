@@ -1,130 +1,159 @@
-# Thanks https://gist.github.com/youhide/121750fc4878801ea8e908080b535beb
+name: C/C++ CI
 
-name: Build Binaries
+on: [push]
 
-on:
-  push:
-    tags:
-      - '*'
-
-jobs:                
-
-  build-linux:
-
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
-
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
-        config:
-        - {
-            name: "Linux-x86_64",
-            os: ubuntu-latest,
-            artifact: "blast-dbf",
-            build_type: "Release",
-            cc: "gcc",
-            cxx: "g++",
-            archiver: "7z a",
-            generators: "Ninja"
-          }
-        - {
-            name: "macOS-x86_64",
-            os: macos-latest,
-            artifact: "blast-dbf",
-            build_type: "Release",
-            cc: "clang",
-            cxx: "clang++",
-            archiver: "7za a",
-            generators: "Ninja"
-          }
-        # - {
-        #     name: "Windows MSVC",
-        #     os: windows-latest,
-        #     artifact: "blast-dbf.exe",
-        #     build_type: "Release",
-        #     cc: "cl",
-        #     cxx: "cl",
-        #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-        #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-        #     archiver: "7z a",
-        #     generators: "Visual Studio 16 2019"
-        #   }
-        # - {
-        #     name: "Windows MinGW",
-        #     os: windows-latest,
-        #     artifact: "windows_mingw.7z",
-        #     build_type: "Release",
-        #     cc: "gcc",
-        #     cxx: "g++",
-        #     archiver: "7z a",
-        #     generators: "Ninja"
-        #   }
-
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        configs: [Release, Debug]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2.0.0
+    - name: Build project
+      uses: nicledomaS/cmake_build_action@v1.4
+      with:
+        config: ${{ matrix.configs }}
+        submodule_update: ON
+        run_tests: ON
+        unit_test_build: -DFIND_TESTS=ON
+        cmake_args: -DFIND_MODULES=ON;-DENABLE_TIDY=ON
+        create_package: ON
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/*.tar.gz
+        name: artifact_${{ matrix.os }}_${{ matrix.configs }}.tar.gz
 
-      - name: Install dependencies on Ubuntu
-        if: startsWith(matrix.config.name, 'Ubuntu_Latest_GCC')
-        run: |
-          sudo apt-get update
-          sudo apt-get install ninja-build cmake
-          ninja --version
-          cmake --version
-          gcc --version
+
+# name: Build Binaries
+
+# on:
+#   push:
+#     tags:
+#       - '*'
+
+# jobs:                
+
+#   build-linux:
+
+#     name: ${{ matrix.config.name }}
+#     runs-on: ${{ matrix.config.os }}
+
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         config:
+#         - {
+#             name: "Linux-x86_64",
+#             os: ubuntu-latest,
+#             artifact: "blast-dbf",
+#             build_type: "Release",
+#             cc: "gcc",
+#             cxx: "g++",
+#             archiver: "7z a",
+#             generators: "Ninja"
+#           }
+#         - {
+#             name: "macOS-x86_64",
+#             os: macos-latest,
+#             artifact: "blast-dbf",
+#             build_type: "Release",
+#             cc: "clang",
+#             cxx: "clang++",
+#             archiver: "7za a",
+#             generators: "Ninja"
+#           }
+#         # - {
+#         #     name: "Windows MSVC",
+#         #     os: windows-latest,
+#         #     artifact: "blast-dbf.exe",
+#         #     build_type: "Release",
+#         #     cc: "cl",
+#         #     cxx: "cl",
+#         #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+#         #     environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+#         #     archiver: "7z a",
+#         #     generators: "Visual Studio 16 2019"
+#         #   }
+#         # - {
+#         #     name: "Windows MinGW",
+#         #     os: windows-latest,
+#         #     artifact: "windows_mingw.7z",
+#         #     build_type: "Release",
+#         #     cc: "gcc",
+#         #     cxx: "g++",
+#         #     archiver: "7z a",
+#         #     generators: "Ninja"
+#         #   }
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+
+#       - name: Install dependencies on Ubuntu
+#         if: startsWith(matrix.config.name, 'Ubuntu_Latest_GCC')
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install ninja-build cmake
+#           ninja --version
+#           cmake --version
+#           gcc --version
           
-      - name: Install dependencies on Windows
-        if: startsWith(matrix.config.os, 'windows')
-        run: |
-          choco install ninja cmake
-          ninja --version
-          cmake --version
+#       - name: Install dependencies on Windows
+#         if: startsWith(matrix.config.os, 'windows')
+#         run: |
+#           choco install ninja cmake
+#           ninja --version
+#           cmake --version
+#           dir
 
-      - name: Install dependencies on MacOS
-        if: startsWith(matrix.config.os, 'macos')
-        run: |
-          brew install p7zip cmake ninja
-          ninja --version
-          cmake --version
+#       - name: Install dependencies on MacOS
+#         if: startsWith(matrix.config.os, 'macos')
+#         run: |
+#           brew install p7zip cmake ninja
+#           ninja --version
+#           cmake --version
 
-      - name: Build
-        shell: bash
-        run: make
+#       - name: Build
+#         shell: bash
+#         run: make
 
-      - name: Test
-        shell: bash
-        run: make test
+#       - name: Test
+#         shell: bash
+#         run: make test
 
-      - name: Pack
-        shell: bash
-        run: ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
+#       - name: Pack
+#         shell: bash
+#         run: ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
 
-      - name: Upload
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./${{ matrix.config.artifact }}
-          name: ${{ matrix.config.artifact }}
+#       - name: Upload
+#         uses: actions/upload-artifact@v2
+#         with:
+#           path: ./${{ matrix.config.artifact }}
+#           name: ${{ matrix.config.artifact }}
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}-${{ matrix.config.name }}
-          release_name: Release ${{ github.ref }} - ${{ matrix.config.name }}
-          draft: false
-          prerelease: false
+#       - name: Create Release
+#         id: create_release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: ${{ github.ref }}-${{ matrix.config.name }}
+#           release_name: Release ${{ github.ref }} - ${{ matrix.config.name }}
+#           draft: false
+#           prerelease: false
 
-      - name: Upload release asset
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
-          asset_name: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
-          asset_content_type: application/zip
+#       - name: Upload release asset
+#         id: upload-release-asset 
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+#           upload_url: ${{ steps.create_release.outputs.upload_url }} 
+#           asset_path: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
+#           asset_name: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
+#           asset_content_type: application/zip
+
