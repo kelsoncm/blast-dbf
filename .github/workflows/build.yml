@@ -52,7 +52,7 @@ jobs:
         - {
             name: "macOS Latest Clang",
             os: macos-latest,
-            artifact: "macos_clang.7z",
+            artifact: "blast-dbf",
             build_type: "Release",
             cc: "clang",
             cxx: "clang++",
@@ -63,12 +63,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Print env
-        run: |
-          echo github.event.action: ${{ github.event.action }}
-          echo github.event_name: ${{ github.event_name }}
-          env
 
       - name: Install dependencies on Ubuntu
         if: startsWith(matrix.config.name, 'Ubuntu_Latest_GCC')
@@ -85,7 +79,7 @@ jobs:
           choco install ninja cmake
           ninja --version
           cmake --version
-        # cmd "${{ matrix.config.environment_script }}"
+          dir
 
       - name: Install dependencies on MacOS
         if: startsWith(matrix.config.os, 'macos')
@@ -134,6 +128,6 @@ jobs:
         with:
           # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ${{ matrix.config.artifact }}.7z
-          asset_name: ${{ matrix.config.artifact }}.7z
+          asset_path: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
+          asset_name: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
           asset_content_type: application/zip
