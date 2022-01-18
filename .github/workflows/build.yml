@@ -2,8 +2,8 @@ name: Build Binaries
 
 on:
   push:
-    tags:
-      - '*'
+#     tags:
+#       - '*'
 
 jobs:                
 
@@ -95,14 +95,14 @@ jobs:
         shell: bash
         run: make test
 
-      - name: Pack
-        shell: bash
-        run: ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
+      # - name: Pack
+      #   shell: bash
+      #   run: ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z ${{ matrix.config.artifact }}
 
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
-          path: ./${{ matrix.config.artifact }}
+          path: ${{ matrix.config.artifact }}
           name: ${{ matrix.config.artifact }}
 
       - name: Create Release
@@ -124,7 +124,6 @@ jobs:
         with:
           # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
-          asset_name: ${{ matrix.config.artifact }}-${{ matrix.config.os }}.7z
-          asset_content_type: application/zip
-
+          asset_path: ${{ matrix.config.artifact }}
+          asset_name: ${{ matrix.config.artifact }}
+          asset_content_type: binary/octet-stream
