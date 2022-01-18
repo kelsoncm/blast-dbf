@@ -1,0 +1,7 @@
+
+git add .github/workflows/build.yml
+git commit -m "Teste 0.0.$1"
+git push
+git tag -a 0.0.$1 -m "Teste 0.0.$1"
+git push origin 0.0.$1
+
