@@ -2,8 +2,8 @@ name: Build Binaries
 
 on:
   push:
-#     tags:
-#       - '*'
+    tags:
+      - '*'
 
 jobs:                
 
