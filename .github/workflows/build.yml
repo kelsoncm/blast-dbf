@@ -157,9 +157,9 @@ jobs:
       - name: Pack
         shell: bash
         run: |
-          ls -lhaR
-          ${{ matrix.config.archiver }} ${{ matrix.config.artifact }} .
-          ls -lhaR
+          ls -lha
+          ${{ matrix.config.archiver }} ${{ matrix.config.artifact }}.7z ${{ matrix.config.artifact }}
+          ls -lha
 
       - name: Upload
         uses: actions/upload-artifact@v2
@@ -168,11 +168,18 @@ jobs:
           name: ${{ matrix.config.artifact }}
 
       - name: Upload release asset
+        id: upload-release-asset 
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ matrix.config.artifact }}
-          asset_name: ${{ matrix.config.artifact }}
-          asset_content_type: application/octet-stream
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ matrix.config.artifact }}.7z
+          asset_name: ${{ matrix.config.artifact }}.7z
+          asset_content_type: application/zip
+
+
+        # with:
+        #   asset_path: ./my-artifact.zip
+        #   asset_name: my-artifact.zip
+        #   asset_content_type: application/zip
