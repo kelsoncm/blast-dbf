@@ -19,7 +19,7 @@ jobs:
       matrix:
         config:
         - {
-            name: "Ubuntu_Latest_GCC",
+            name: "Linux",
             os: ubuntu-latest,
             artifact: "blast-dbf",
             build_type: "Release",
@@ -29,7 +29,7 @@ jobs:
             generators: "Ninja"
           }
         - {
-            name: "Windows Latest MSVC",
+            name: "Windows MSVC",
             os: windows-latest,
             artifact: "blast-dbf.exe",
             build_type: "Release",
@@ -40,7 +40,7 @@ jobs:
             generators: "Visual Studio 16 2019"
           }
         - {
-            name: "Windows Latest MinGW",
+            name: "Windows MinGW",
             os: windows-latest,
             artifact: "windows_mingw.7z",
             build_type: "Release",
@@ -50,7 +50,7 @@ jobs:
             generators: "Ninja"
           }
         - {
-            name: "macOS Latest Clang",
+            name: "macOS",
             os: macos-latest,
             artifact: "blast-dbf",
             build_type: "Release",
@@ -116,7 +116,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          release_name: Release ${{ github.ref }} - ${{ matrix.config.name }}
           draft: false
           prerelease: false
 
