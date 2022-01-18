@@ -1,6 +1,9 @@
 name: C/C++ CI
 
-on: [push]
+on:
+  push:
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -16,10 +19,10 @@ jobs:
       uses: nicledomaS/cmake_build_action@v1.4
       with:
         config: ${{ matrix.configs }}
-        submodule_update: ON
-        run_tests: ON
+        submodule_update: OFF
+        run_tests: OFF
         unit_test_build: -DFIND_TESTS=ON
-        cmake_args: -DFIND_MODULES=ON;-DENABLE_TIDY=ON
+        cmake_args: -DFIND_MODULES=OFF;-DENABLE_TIDY=OFF
         create_package: ON
     - uses: actions/upload-artifact@v2
       with:
