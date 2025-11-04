@@ -17,9 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "macOS Intel"
-            os: macos-12
-            artifact_name: blast-dbf-macos-intel
           - name: "macOS ARM"
             os: macos-14
             artifact_name: blast-dbf-macos-arm
@@ -52,7 +49,7 @@ jobs:
 
     - name: Install dependencies (Red Hat)
       if: matrix.container == 'rockylinux:9'
-      run: yum install -y make gcc
+      run: microdnf install -y make gcc
 
     - name: Build (macOS ARM)
       if: matrix.os == 'macos-14'
@@ -99,15 +96,6 @@ jobs:
         with:
           path: artifacts
 
-      - name: Upload release assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/blast-dbf-macos-intel/blast-dbf
-          asset_name: blast-dbf-macos-intel
-          asset_content_type: application/octet-stream
       - name: Upload release assets
         uses: actions/upload-release-asset@v1
         env:
