@@ -52,12 +52,24 @@ jobs:
 
     - name: Install dependencies (Red Hat)
       if: matrix.container == 'rockylinux:9'
-      run: dnf install -y make gcc
+      run: yum install -y make gcc
 
-    - name: Build
+    - name: Build (macOS ARM)
+      if: matrix.os == 'macos-14'
+      run: make CC="clang -target arm64-apple-macos14"
+
+    - name: Build (non-macOS ARM)
+      if: matrix.os != 'macos-14'
       run: make
 
-    - name: Test
+    - name: Test (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        ./blast-dbf.exe < sids.dbc > sids.dbf.out
+        fc sids.dbf sids.dbf.out
+
+    - name: Test (non-Windows)
+      if: runner.os != 'Windows'
       run: make test
 
     - name: Upload artifact
