@@ -64,9 +64,8 @@ jobs:
 
     - name: Test (Windows)
       if: runner.os == 'Windows'
-      run: |
-        ./blast-dbf.exe < sids.dbc > sids.dbf.out
-        fc sids.dbf sids.dbf.out
+      shell: bash
+      run: ./blast-dbf.exe < sids.dbc | cmp - sids.dbf
 
     - name: Test (non-Windows)
       if: runner.os != 'Windows'
