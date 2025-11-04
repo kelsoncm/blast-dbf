@@ -1,0 +1,129 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "macOS Intel"
+            os: macos-12
+            artifact_name: blast-dbf-macos-intel
+          - name: "macOS ARM"
+            os: macos-14
+            artifact_name: blast-dbf-macos-arm
+          - name: "Windows 64-bit"
+            os: windows-latest
+            artifact_name: blast-dbf-windows-x64.exe
+          - name: "Debian (Ubuntu)"
+            os: ubuntu-latest
+            artifact_name: blast-dbf-debian-x64
+          - name: "Red Hat (RockyLinux)"
+            os: ubuntu-latest
+            container: rockylinux:9
+            artifact_name: blast-dbf-redhat-x64
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: brew install gcc
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: choco install mingw
+
+    - name: Install dependencies (Debian)
+      if: runner.os == 'Linux' && matrix.container == ''
+      run: sudo apt-get update && sudo apt-get install -y gcc make
+
+    - name: Install dependencies (Red Hat)
+      if: matrix.container == 'rockylinux:9'
+      run: dnf install -y make gcc
+
+    - name: Build
+      run: make
+
+    - name: Test
+      run: make test
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ runner.os == 'Windows' && 'blast-dbf.exe' || 'blast-dbf' }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/blast-dbf-macos-intel/blast-dbf
+          asset_name: blast-dbf-macos-intel
+          asset_content_type: application/octet-stream
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/blast-dbf-macos-arm/blast-dbf
+          asset_name: blast-dbf-macos-arm
+          asset_content_type: application/octet-stream
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/blast-dbf-windows-x64.exe/blast-dbf.exe
+          asset_name: blast-dbf-windows-x64.exe
+          asset_content_type: application/octet-stream
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/blast-dbf-debian-x64/blast-dbf
+          asset_name: blast-dbf-debian-x64
+          asset_content_type: application/octet-stream
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/blast-dbf-redhat-x64/blast-dbf
+          asset_name: blast-dbf-redhat-x64
+          asset_content_type: application/octet-stream
