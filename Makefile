@@ -1,8 +1,22 @@
-blast-dbf: blast-dbf.c blast.c blast.h
-	cc -o blast-dbf blast.c blast-dbf.c
+TARGET = blast-dbf
+ifeq ($(OS),Windows_NT)
+    TARGET := $(TARGET).exe
+endif
 
-test: blast-dbf
-	./blast-dbf < sids.dbc | cmp - sids.dbf
+$(TARGET): blast-dbf.c blast.c blast.h
+	$(CC) -o $(TARGET) blast.c blast-dbf.c
+
+test: $(TARGET)
+ifeq ($(OS),Windows_NT)
+	./$(TARGET) < sids.dbc > sids.dbf.out
+	fc sids.dbf sids.dbf.out
+else
+	./$(TARGET) < sids.dbc | cmp - sids.dbf
+endif
 
 clean:
-	rm -f blast-dbf *.o
+ifeq ($(OS),Windows_NT)
+	del $(TARGET) *.o
+else
+	rm -f $(TARGET) *.o
+endif

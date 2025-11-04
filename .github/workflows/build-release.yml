@@ -51,21 +51,10 @@ jobs:
       if: matrix.container == 'rockylinux:9'
       run: microdnf install -y make gcc
 
-    - name: Build (macOS ARM)
-      if: matrix.os == 'macos-14'
-      run: make CC="clang -target arm64-apple-macos14"
-
-    - name: Build (non-macOS ARM)
-      if: matrix.os != 'macos-14'
+    - name: Build
       run: make
 
-    - name: Test (Windows)
-      if: runner.os == 'Windows'
-      shell: bash
-      run: ./blast-dbf.exe < sids.dbc | cmp - sids.dbf
-
-    - name: Test (non-Windows)
-      if: runner.os != 'Windows'
+    - name: Test
       run: make test
 
     - name: Upload artifact
