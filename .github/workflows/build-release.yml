@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # evita aviso de deprecação Node 20
+
 permissions:
   contents: read
   actions: read
@@ -29,13 +32,13 @@ jobs:
             cross: false
 
           - name: "macOS x64"
-            os: macos-13          # último runner Intel da GitHub
+            os: macos-13
             artifact_name: blast-dbf-macos-x64
             cross: false
 
           # ── ARM / aarch64 ───────────────────────────────────────────────
           - name: "macOS ARM64"
-            os: macos-latest      # Apple Silicon nativo
+            os: macos-latest
             artifact_name: blast-dbf-macos-arm64
             cross: false
 
@@ -47,20 +50,17 @@ jobs:
             apt_pkg: gcc-aarch64-linux-gnu
 
           - name: "Windows ARM64"
-            os: ubuntu-latest     # cross-compila no Linux
+            os: windows-11-arm          # runner ARM nativo — disponível desde mai/2025
             artifact_name: blast-dbf-windows-arm64.exe
-            cross: true
-            cc: aarch64-w64-mingw32-gcc
-            apt_pkg: gcc-mingw-w64-aarch64
-            ext: .exe
+            cross: false
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       # ── Dependências nativas ─────────────────────────────────────────────
-      - name: Install dependencies (Windows native)
-        if: runner.os == 'Windows' && matrix.cross == false
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
         run: choco install mingw
 
       - name: Install dependencies (Linux native)
@@ -69,9 +69,11 @@ jobs:
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install make
+        run: |
+          # make já existe via Xcode CLT; só instala se realmente ausente
+          command -v make || brew install make
 
-      # ── Cross-compilação (Linux → Linux ARM64 / Windows ARM64) ──────────
+      # ── Cross-compilação (Linux → Linux ARM64) ───────────────────────────
       - name: Install cross-compiler
         if: matrix.cross == true
         run: |
@@ -86,7 +88,7 @@ jobs:
         if: matrix.cross == true
         run: make CC=${{ matrix.cc }}
 
-      # ── Testes (apenas plataformas nativas; cross não executa) ───────────
+      # ── Testes ───────────────────────────────────────────────────────────
       - name: Test
         if: matrix.cross == false && runner.os != 'Windows'
         run: make test
@@ -97,7 +99,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            blast-dbf${{ matrix.ext || '' }}
+            blast-dbf
             blast-dbf.exe
           if-no-files-found: error
 
