@@ -102,25 +102,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6.0.2
-
       - name: Download all artifacts
         uses: actions/download-artifact@v8.0.1
         with:
           path: artifacts
 
-      - name: Create release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete ${{ github.ref_name }} --yes || true
-          gh release create ${{ github.ref_name }} \
-            --title "Release ${{ github.ref_name }}" \
-            --notes ""
+      - name: List downloaded files
+        run: find artifacts -maxdepth 2 -type f | sort
 
-      - name: Upload release assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          find artifacts -type f -maxdepth 2 -print0 | xargs -0 -I {} gh release upload ${{ github.ref_name }} "{}" --clobber
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          files: |
+            artifacts/*/*
+          fail_on_unmatched_files: true
+          generate_release_notes: false
