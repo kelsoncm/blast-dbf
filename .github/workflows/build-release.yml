@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
@@ -91,7 +91,7 @@ jobs:
         run: make test
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ matrix.artifact_name }}
           path: |
@@ -105,20 +105,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           path: artifacts
+          merge-multiple: true
 
       - name: Create and upload release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release delete ${{ github.ref_name }} --yes || true
+          gh release delete ${{ github.ref_name }} --yes 2>/dev/null || true
           gh release create ${{ github.ref_name }} \
             --title "Release ${{ github.ref_name }}" \
             --notes ""
-          gh release upload ${{ github.ref_name }} artifacts/**/*
+          find artifacts/ -type f | xargs gh release upload ${{ github.ref_name }}
