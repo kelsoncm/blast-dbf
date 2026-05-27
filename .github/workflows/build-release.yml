@@ -94,8 +94,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
+          name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_name }}
           compression-level: 0
+          if-no-files-found: error
 
   release:
     needs: build
@@ -106,6 +108,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v8.0.1
         with:
+          pattern: blast-dbf-*
           path: dist
           merge-multiple: true
 
