@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # evita aviso de deprecação Node 20
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -41,6 +41,7 @@ jobs:
             os: macos-latest
             artifact_name: blast-dbf-macos-arm64
             cross: false
+            cflags: "-arch arm64"
 
           - name: "Linux ARM64"
             os: ubuntu-latest
@@ -50,7 +51,7 @@ jobs:
             apt_pkg: gcc-aarch64-linux-gnu
 
           - name: "Windows ARM64"
-            os: windows-11-arm          # runner ARM nativo — disponível desde mai/2025
+            os: windows-11-arm
             artifact_name: blast-dbf-windows-arm64.exe
             cross: false
 
@@ -70,7 +71,6 @@ jobs:
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          # make já existe via Xcode CLT; só instala se realmente ausente
           command -v make || brew install make
 
       # ── Cross-compilação (Linux → Linux ARM64) ───────────────────────────
@@ -82,7 +82,7 @@ jobs:
 
       - name: Build (native)
         if: matrix.cross == false
-        run: make
+        run: make ${{ matrix.cflags && format('CFLAGS="{0}"', matrix.cflags) || '' }}
 
       - name: Build (cross)
         if: matrix.cross == true
