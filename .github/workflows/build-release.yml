@@ -17,36 +17,89 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "Windows 64-bit"
+          # ── Intel / x86-64 ──────────────────────────────────────────────
+          - name: "Windows x64"
             os: windows-latest
             artifact_name: blast-dbf-windows-x64.exe
-          - name: "Linux"
+            cross: false
+
+          - name: "Linux x64"
             os: ubuntu-latest
             artifact_name: blast-dbf-linux-x64
+            cross: false
+
+          - name: "macOS x64"
+            os: macos-13          # último runner Intel da GitHub
+            artifact_name: blast-dbf-macos-x64
+            cross: false
+
+          # ── ARM / aarch64 ───────────────────────────────────────────────
+          - name: "macOS ARM64"
+            os: macos-latest      # Apple Silicon nativo
+            artifact_name: blast-dbf-macos-arm64
+            cross: false
+
+          - name: "Linux ARM64"
+            os: ubuntu-latest
+            artifact_name: blast-dbf-linux-arm64
+            cross: true
+            cc: aarch64-linux-gnu-gcc
+            apt_pkg: gcc-aarch64-linux-gnu
+
+          - name: "Windows ARM64"
+            os: ubuntu-latest     # cross-compila no Linux
+            artifact_name: blast-dbf-windows-arm64.exe
+            cross: true
+            cc: aarch64-w64-mingw32-gcc
+            apt_pkg: gcc-mingw-w64-aarch64
+            ext: .exe
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies (Windows)
-      if: runner.os == 'Windows'
-      run: choco install mingw
+      # ── Dependências nativas ─────────────────────────────────────────────
+      - name: Install dependencies (Windows native)
+        if: runner.os == 'Windows' && matrix.cross == false
+        run: choco install mingw
 
-    - name: Install dependencies (Linux)
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y gcc make
+      - name: Install dependencies (Linux native)
+        if: runner.os == 'Linux' && matrix.cross == false
+        run: sudo apt-get update && sudo apt-get install -y gcc make
 
-    - name: Build
-      run: make
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install make
 
-    - name: Test
-      run: make test
+      # ── Cross-compilação (Linux → Linux ARM64 / Windows ARM64) ──────────
+      - name: Install cross-compiler
+        if: matrix.cross == true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make ${{ matrix.apt_pkg }}
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.artifact_name }}
-        path: ${{ runner.os == 'Windows' && 'blast-dbf.exe' || 'blast-dbf' }}
+      - name: Build (native)
+        if: matrix.cross == false
+        run: make
+
+      - name: Build (cross)
+        if: matrix.cross == true
+        run: make CC=${{ matrix.cc }}
+
+      # ── Testes (apenas plataformas nativas; cross não executa) ───────────
+      - name: Test
+        if: matrix.cross == false && runner.os != 'Windows'
+        run: make test
+
+      # ── Upload do artefato ───────────────────────────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            blast-dbf${{ matrix.ext || '' }}
+            blast-dbf.exe
+          if-no-files-found: error
 
   release:
     needs: build
@@ -55,7 +108,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -67,5 +120,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete ${{ github.ref_name }} --yes || true
-          gh release create ${{ github.ref_name }} --title "Release ${{ github.ref_name }}" --notes ""
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes ""
           gh release upload ${{ github.ref_name }} artifacts/**/*
