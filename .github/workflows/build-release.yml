@@ -32,16 +32,15 @@ jobs:
             cross: false
 
           - name: "macOS x64"
-            os: macos-13
+            os: macos-latest
             artifact_name: blast-dbf-macos-x64
             cross: false
+            cflags: "-arch x86_64"
 
-          # ── ARM / aarch64 ───────────────────────────────────────────────
-          - name: "macOS ARM64"
-            os: macos-latest
-            artifact_name: blast-dbf-macos-arm64
+          - name: "Windows ARM64"
+            os: windows-11-arm
+            artifact_name: blast-dbf-windows-arm64.exe
             cross: false
-            cflags: "-arch arm64"
 
           - name: "Linux ARM64"
             os: ubuntu-latest
@@ -50,10 +49,11 @@ jobs:
             cc: aarch64-linux-gnu-gcc
             apt_pkg: gcc-aarch64-linux-gnu
 
-          - name: "Windows ARM64"
-            os: windows-11-arm
-            artifact_name: blast-dbf-windows-arm64.exe
+          - name: "macOS ARM64"
+            os: macos-latest
+            artifact_name: blast-dbf-macos-arm64
             cross: false
+            cflags: "-arch arm64"
 
     steps:
       - name: Checkout code
@@ -90,7 +90,7 @@ jobs:
 
       # ── Testes ───────────────────────────────────────────────────────────
       - name: Test
-        if: matrix.cross == false && runner.os != 'Windows'
+        if: matrix.cross == false && runner.os != 'Windows' && !matrix.no_test
         run: make test
 
       # ── Upload do artefato ───────────────────────────────────────────────
