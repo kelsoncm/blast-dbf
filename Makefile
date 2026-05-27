@@ -17,8 +17,4 @@ else
 endif
 
 clean:
-ifeq ($(OS),Windows_NT)
-	del $(TARGET) *.o
-else
-	rm -f $(TARGET) *.o
-endif
+	rm -f blast-dbf blast-dbf.exe *.o
