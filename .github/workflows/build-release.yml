@@ -23,27 +23,22 @@ jobs:
           - name: "Windows x64"
             os: windows-latest
             artifact_name: blast-dbf-windows-x64.exe
-            windows: true
 
           - name: "Windows ARM64"
             os: windows-11-arm
             artifact_name: blast-dbf-windows-arm64.exe
-            windows: true
 
           - name: "Linux x64"
             os: ubuntu-latest
             artifact_name: blast-dbf-linux-x64
-            windows: false
 
           - name: "Linux ARM64"
             os: ubuntu-24.04-arm
             artifact_name: blast-dbf-linux-arm64
-            windows: false
 
           - name: "macOS ARM64"
             os: macos-latest
             artifact_name: blast-dbf-macos-arm64
-            windows: false
             cflags: -arch arm64
 
     steps:
@@ -87,14 +82,20 @@ jobs:
         if: runner.os != 'Windows'
         run: make test
 
+      - name: Rename artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: mv blast-dbf.exe "${{ matrix.artifact_name }}"
+
+      - name: Rename artifact (Unix)
+        if: runner.os != 'Windows'
+        run: mv blast-dbf "${{ matrix.artifact_name }}"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: ${{ matrix.artifact_name }}
-          path: |
-            blast-dbf
-            blast-dbf.exe
-          if-no-files-found: error
+          path: ${{ matrix.artifact_name }}
+          compression-level: 0
 
   release:
     needs: build
@@ -113,7 +114,6 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
-          files: |
-            artifacts/*/*
+          files: artifacts/*/*
           fail_on_unmatched_files: true
           generate_release_notes: false
