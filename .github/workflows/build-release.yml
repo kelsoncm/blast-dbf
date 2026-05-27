@@ -86,9 +86,18 @@ jobs:
         if: matrix.cross == true
         run: make clean && make CC=${{ matrix.cc }}
 
-      - name: Test
+      - name: Test (Unix native)
         if: matrix.cross == false && runner.os != 'Windows'
         run: make test
+
+      - name: Test (Windows native)
+        if: matrix.name == 'Windows x64' || matrix.name == 'Windows ARM64'
+        shell: bash
+        run: ./blast-dbf.exe < sids.dbc | cmp - sids.dbf
+
+      - name: Skip test (cross-compiled)
+        if: matrix.cross == true
+        run: echo "Skipping test for cross-compiled target ${{ matrix.name }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
