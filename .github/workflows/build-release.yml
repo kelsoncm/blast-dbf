@@ -106,14 +106,15 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v8.0.1
         with:
-          path: artifacts
+          path: dist
+          merge-multiple: true
 
       - name: List downloaded files
-        run: find artifacts -maxdepth 2 -type f | sort
+        run: find dist -maxdepth 1 -type f | sort
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
         with:
-          files: artifacts/*/*
+          files: dist/*
           fail_on_unmatched_files: true
           generate_release_notes: false
